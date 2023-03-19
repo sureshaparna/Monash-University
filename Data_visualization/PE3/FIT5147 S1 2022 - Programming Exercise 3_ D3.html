@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- saved from url=(0109)https://lms.monash.edu/pluginfile.php/14499776/mod_resource/content/7/FIT5147_S1_2022_PE3_template_index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <title>FIT5147 S1 2022 - Programming Exercise 3: D3</title>
+    <!-- Load required scripts -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+
+    <style>
+        .content {
+            display: inline-block;
+            vertical-align: top;
+        }
+        .side-bar {
+            display: inline-block;
+            vertical-align: top;
+            background-color: lightgrey;
+            box-sizing: border-box;
+            width: 450px;
+            height: 1000px;
+            padding: 30px 30px 40px 30px;
+            text-align: left;
+            font-size: large;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+        .hover-link{
+            stroke: greenyellow;
+        }
+
+        .normal-link{
+            stroke: gray;
+        }
+
+        .normal-node{
+            fill: red;
+        }
+
+        .special-node{
+            fill: blue;
+        }
+
+        .hover-node{
+            fill: greenyellow;
+        }
+
+        .boundary {
+            stroke: black;
+            stroke-width: 1;
+            opacity: 0.8;
+        }
+        #tooltip-container {
+            position: absolute;
+            background-color: white;
+            padding: 0px 15px 0px 15px;
+            display: none;
+            border: 1px solid #555;
+        }
+        #tooltip-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: left;">
+        <div class="side-bar">
+	    <h1> Counting Butterflies in Royal Park - Biodiversity Survey 2017</h1>
+
+            <p> This map shows a simplified version of the boundaries of Royal Park in Parkville, Melbourne. In its centre is the Melbourne Zoo, also known as the Royal Melbourne Zoological Gardens.</p>
+
+	    <p> In 2017, part of a Butterfly Biodiversity Survey was conducted in Royal Park. During January-March, researchers visited specific plants in various regions of the park and noted whether they could see any butterflies at that time. On this map, the markers indicate locations where they looked for butterflies and the lines between the markers indicate the routes they took on the same day from one location to another. No survey data was collected within the Melbourne Zoo, which has its own enclosed <a href="https://www.together.vic.gov.au/nature-wildlife/melbourne-zoos-butterfly-house-360">Butterfly House</a>.</p>
+	    <img src="./FIT5147 S1 2022 - Programming Exercise 3_ D3_files/butterfly-on-a-grass_mini30.jpg" alt="Butterfly on a grass. Photo by Michael Hodgins." width="400">
+	    <p style="font-size: medium;"><i>Photo via <a href="https://www.goodfreephotos.com/animals/bugs/butterfly-on-a-grass.jpg.php">Good Free Photos</a>, under the <a href="http://creativecommons.org/licenses/publicdomain/"> CC0 / Public Domain License</a>. </i></p>
+            <h3>Acknowledgements</h3>
+            <p style="font-size: medium;"><i> Adapted from code from a Master's Thesis by Merry Hoang. The survey data is adapted from the <a href="https://data.melbourne.vic.gov.au/Environment/Butterflybiodiversity-survey-2017/kmtd-nvqr">Our City's Little Gems study</a> which observed butterfly biodiversity and flower-butterfly interactions in the City of Melbourne between January - March 2017. </i></p>
+	</div>
+
+        <div class="content">    
+            <svg id="canvas" width="1500px" height="1000px"><path class="boundary" d="M581.5789473680779,447.36842105258256L518.4210526319221,384.2105263157282L518.4210526319221,321.05263157887384L581.5789473680779,257.8947368420195L644.7368421051651,257.8947368420195L707.8947368422523,321.05263157887384Z" style="fill: rgb(190, 174, 212);"></path><path class="boundary" d="M297.36842105258256,257.8947368420195L486.8421052629128,257.8947368420195L486.8421052629128,100L802.6315789474174,100L802.6315789474174,573.6842105262913L676.3157894741744,700L549.9999999990687,700L297.36842105258256,510.5263157894369Z" style="fill: rgb(234, 255, 234);"></path></svg>
+        </div>
+    </div>
+
+    <div id="tooltip-container">
+        <p id="tooltip-text">Tooltip text goes here.</p>
+    </div>
+
+    <script type="text/javascript">
+        // #region Existing code in template. Avoid modifying unless absolutely necessary!
+        var svg = d3.select("#canvas");
+
+        // URLs to data sources. DO NOT MODIFY
+
+        var boundariesDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/royalpark_boundaries.json";
+        var locationDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/PE3_butterflysurvey_locations.json";
+        var routeDataPath = "https://raw.githubusercontent.com/michaelniemann/FIT5147-S1-2022-PE3-Data/main/PE3_butterflysurvey_routes.json";
+
+
+        // Add the Royal Park boundary polygons. Adapted from original code courtesy of Merry Hoang
+		d3.json(boundariesDataPath, function(data) {
+			var projection = d3.geoIdentity()
+				.reflectY(true)
+				.fitExtent([
+                                        [100, 100],
+					[1000, 700]
+				], data);
+
+			var path = d3.geoPath()
+				.projection(projection)
+
+			svg.selectAll("path").filter(".boundary")
+				.data(data.features)
+				.enter()
+				.append("path")
+				.attr('class', "boundary")
+				.attr("d", path)
+				.style("fill", function(d) {
+                  switch (d.properties.type)
+                    {
+                        case 1:
+			    return 'rgba(234,255,234)';
+                        case 2:
+                            return 'rgba(190,174,212)';
+                        default:
+                            return "white";
+                    }
+				})
+                .lower();
+		})
+        // #endregion
+
+        // Load csv for butterfly positions
+
+        d3.json(routeDataPath, function(error, data){
+            console.log(data);
+            // accessing the route data for the coordinates
+            var links = svg
+                .selectAll("line")
+                .data(data)
+                .enter()
+                .append("line")
+                //route coordinates for end and start routes
+                .attr("x1", function(d) { return d.routeCoords.start[0]; })
+                .attr("y1", function(d) { return d.routeCoords.start[1]; })
+                .attr("x2", function(d) { return d.routeCoords.end[0]; })
+                .attr("y2", function(d) { return d.routeCoords.end[1]; })
+                .style("stroke-width", function(d){
+                    return d.routeUses;
+                    })
+                .attr("class", "normal-link")
+                // mouse over to display the details on the top right side of the route edge
+                .on("mouseover", function(d){
+                d3.select("#tooltip-container")
+                .style("display", "block")
+                .style("top", d3.mouse(this)[1] + 950 + "px" )
+                .style("left", d3.mouse(this)[0] + 30 +"px");
+                // Displaying the route detail, and the number of times the route has been used on hover the mouse over the route edges
+                d3.select("#tooltip-text")
+                .html("Route Detail: " + d.routeDetail + "<br>No.of times route used: " + d.routeUses);
+
+                d3.select(this)
+                    .attr("class", "hover-link");
+                })
+                .on("mouseout", function(d){
+                    d3.select("#tooltip-container")
+                        .style("display", "none");
+
+                    d3.select(this)
+                    .attr("class", "normal-link");
+                })
+        });
+        // Accessing location data for the edges
+        d3.json(locationDataPath, function(error, data){
+            // creating  nodes
+
+            var nodes = svg
+                .selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("r", 5)
+                // nodes to represent the sites with 0 butterfly count and non-zero butterfly count
+                .attr("class", function(d){
+                    if (d.butterflyCount == 0) {
+                        return "normal-node";
+                    }
+                    else{return "special-node"}
+                })
+                .attr("cx", function (d) { return d.coord[0]; })
+                .attr("cy", function (d) { return d.coord[1]; })
+                .on("mouseover", function(d){
+                d3.select(this)
+                    .attr("class", "hover-node");
+                d3.select("#tooltip-container")
+                .style("display", "block")
+                .style("top", d3.mouse(this)[1] + 950 + "px" )
+                .style("left", d3.mouse(this)[0] + 30 +"px");
+                // Displaying the location name, region Id, number of visits and butterfly count
+                d3.select("#tooltip-text")
+                .html("Location Name: " + d.locationName + "<br>Royal Park Region: " + d.regionId + "<br>No. of visits: " + d.visits + "<br>Butterfly Count: " + d.butterflyCount);
+                })
+                .on("mouseout", function(d){
+                    d3.select(this)
+                    .attr("class", function(d){
+                    if (d.butterflyCount == 0) {
+                        return "normal-node";
+                    }
+                    else{return "special-node"}
+                });
+
+                    d3.select("#tooltip-container")
+                        .style("display", "none");
+                })
+            // text attributes
+            var texts = svg
+                .selectAll("text")
+                .data(data)
+                .enter()
+                .append("text")
+                .text(function(d){
+                    return d.butterflyCount;
+                })
+                .attr("dx", function(d){return d.coord[0] + 5;})
+                .attr("dy", function(d){return d.coord[1] + 5;})
+
+        });
+    </script>
+
+</body></html>
