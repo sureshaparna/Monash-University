@@ -1,0 +1,590 @@
+---
+title: "Assignment 2 ETC1010 - 5510"
+author: "T15_Tue_vapour"
+date: "`r format(Sys.Date(), '%A, %B %e %Y')`"
+output:
+  html_document: 
+    toc: yes
+subtitle: Olympics Games
+---
+
+<style>
+p.comment {
+background-color: #DBDBDB;
+padding: 10px;
+border: 1px solid black;
+margin-left: 25px;
+border-radius: 5px;
+font-style: italic;
+} </style>
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      eval = TRUE, 
+                      cache = FALSE, 
+                      cache.lazy = FALSE )
+```
+
+
+## 🏣 Marking + Grades + Due date
+
+- This **group** assignment will be worth **20%** of your total grade, and is marked out of a total of 126 marks.
+
+- This assignment is due at **8pm (Melbourne Time) on Monday,  20 September 2021**.
+ 
+- For this assignment, **everyone** will need to upload the rendered **HTML** file into Moodle. Please make sure you add your name on the YAML part of this Rmd file. The HTML file will be used as your final answers to the assignment. (Remember that you need to submit 2 files: html and Rmd, please do not zip your files. NO ZIP!!!)
+
+- Keep all your work in the Rstudio cloud. We will check your project online via Rstudio cloud.
+
+- After the assignment is submitted, you will need to grade the effort and contributions of your team members. For this, we are going to use a Google doc form. I will release the instructions about this after you have submitted the assignment.
+
+- All the R code chunks should have `echo` and `eval` set to `TRUE`. The final knitted report should display **both** the code and the output of each code chunk. If a code chunk is causing error when knitting, then use `echo = TRUE` and `eval = FALSE`.
+
+- The group project must knit without any problems to produce a html report. Reports that are not knitted correctly will be awarded 0.
+
+
+## 🏗️Instructions
+
+The data files are located inside the data folder in your assignment R projects.
+
+To complete the assignment, you will need to fill in the blanks with the appropriate function names, arguments, or other names. These sections are marked with  `___`. **At a minimum, your assignment should be able to be "knitted"** using the `Knit` button for your Rmarkdown document. 
+
+
+## 📑 Report
+
+### Introduction
+
+The data that we are going to study in this assignment is about the Olympics games. The data span from the first Olympics held in Athens in 1986 to the 2016 Olympics held in Rio de Janeiro. We are going to run some modeling on this data. The purpose of this assignment is to show you the typical tasks performed by a data analyst from analyzing data to performing modeling to gain insights.
+
+There are 2 data files in this assignment:   
+1. `athlete_events.csv`: The individual athlete competing in the Olympic events.  
+2. `noc_regions.csv`: National Olympic Committee with its country name.
+
+The variables in `athlete_events.csv` are:
+
+1. ID
+2. Name
+3. Sex - Female, Male
+4. Age 
+5. Height — In centimeters
+6. Weight — In kilograms
+7. Team — Team name
+8. NOC — National Olympic Committee (3-letter code)
+9. Games — Year and season
+10. Year — Integer
+11. Season — Summer, Winter
+12. City — Host city
+13. Sport — Sport
+14. Event — Event
+15. Medal — Gold, Silver, Bronze, or NA.
+
+
+### Section A: Data Preparation
+
+#### 1. Load all the essential packages here. [Hint: There is about 10 here] [3m]
+
+```{r, message = FALSE, warning = FALSE}
+# all packages here
+library(tidyverse)
+library(rvest)
+library(naniar)
+library(plotly)
+library(ggrepel)
+library(readxl)
+library(janitor)
+library(polite)
+library(ggResidpanel)
+library(broom)
+
+```
+
+#### 2. Import the `athlete_events` data. We will also remove the 1906 Olympic Games which is not recognized by the International Olympic Committee. [3m]
+
+```{r}
+data_raw <- read_csv("data/athlete_events.csv") 
+
+data <- data_raw %>% 
+  filter(Year != "1906") #2m
+```
+
+#### 3. Get the full region name of NOC (National Olympic Committees) and merge it with the athlete data set. [hint: use the `noc_regions.csv` and `notes` column is not needed.] [4m]
+
+```{r}
+noc <- read_csv("data/noc_regions.csv")
+
+data_noc <- data %>% 
+    left_join(noc %>% select(NOC, region),
+              by = "NOC")
+
+head(data_noc)
+```
+
+#### 4. Scrap the data about the host countries from the web (https://en.wikipedia.org/wiki/List_of_Olympic_Games_host_cities). The objective of this is to get the name of the host *country* of each Olympics, which will later be merged together with the data from the `athlete_events` data set. The output should have information on the City, Country, Year and Continent. [3m]
+
+```{r}
+hostlink <- read_html("https://en.wikipedia.org/wiki/List_of_Olympic_Games_host_cities")
+
+host <- hostlink %>% 
+            html_nodes("table:nth-child(19)") %>% #2m
+            html_table() %>% 
+            `[[` (1) %>% # to extract the first element from the list
+            select(-1) # delete first column as the column of City is duplicated.
+
+head(host)
+```
+
+#### 5. Merge the `host` table with the `data_noc` table. [Note: some years might have 2 hosting cities)] [4m]
+
+```{r}
+data_complete <- data_noc %>% 
+    left_join(host %>% select(Year, City, Country), # only select relevant columns
+              by = c("Year","City"))
+
+head(data_complete)
+```
+
+#### 6. There are some missing values in the variable `Country`. Find out which cities and the years have missing values of `Country`. [hint: The table should not have any duplicate values. You might want to look up some new function for this which we have not taught in class.] [3m]
+
+```{r}
+data_complete %>% 
+   filter(is.na(Country)) %>% #2m
+    select(Year, City, Country) %>% 
+    distinct() # the function that get rid of duplicated values
+```
+
+Now that we know which City (and Year) have issues, we have to check the wiki table and make edits to our dataset. The city name from the wiki table contains some footnote numbering. I have identified those cases for you as below: (The left is from the wiki table, the right is from the `ahtlete_events` data)
+
+1. Athens = Athina  
+2. St. Louis[a] = St. Louis  
+3. London[b] = London  
+4. Antwerp[c] = Antwerpen  
+5. St. Moritz = Sankt Moritz  
+6. MelbourneStockholm = Melbourne [note: Two cities are hosted country, change it to Melbourne and add extra rows for Stockholm as below.]
+7. Rome = Roma  
+8. Innsbruck[g] = Innsbruck  
+9. Moscow = Moskva  
+10. Turin = Torino  
+11. Beijing[i] = Beijing  
+
+Add an extra row for Year (1956), City (Stockholm), Country (Sweden).  
+Also, change the corresponding row of MelbourneStockholm's host country to just Australia.
+
+(Phew! it is a lot of works isn't it, welcome to the real life of data analyst! 😓)
+
+I have done it for you here, as below. Please try to understand the code below as they are very useful functions!
+
+```{r}
+host_c <- host %>% 
+   mutate(City = case_when(City == "Athens" ~ "Athina",
+                         City == "St. Louis[a]" ~ "St. Louis",
+                         City == "London[b]" ~ "London",
+                         City == "Antwerp[c]" ~ "Antwerpen",
+                         City == "St. Moritz" ~ "Sankt Moritz",
+                         City == "MelbourneStockholm[f]" ~ "Melbourne",
+                         City == "Rome" ~ "Roma",
+                         City == "Innsbruck[g]" ~ "Innsbruck",
+                         City == "Moscow" ~ "Moskva",
+                         City == "Turin" ~ "Torino",
+                         City == "Beijing[i]" ~ "Beijing",
+                         City == "Palisades Tahoe, then called Squaw Valley" ~ "Squaw Valley",
+                         TRUE ~ City)) %>% 
+    add_row(City = "Stockholm", Year = 1956, Country = "Sweden") %>% 
+    mutate_at("Country", str_replace, "Australia\\sSweden", "Australia" )
+# the "\s" is because of regular expression of a space
+```
+
+#### 7. Now, merge the data again and check whether there is any missing value in the `Country` variable. [6m]
+
+```{r}
+final_data <- data_noc %>% 
+    left_join(host_c %>% select(Year, City, Country), # only select relevant columns
+              by = c("Year","City")) #2m
+
+head(final_data)
+
+any_na(final_data$Country)
+```
+
+Now, the data is in good shape and we are ready to explore the data in more detail.
+
+### Section B: Exploring Missing Values
+
+#### 8. What is the percentage of missing values in `final_data`? [Inline code is required. [1m +1m]
+
+```{r}
+pct_miss(final_data)
+```
+The percentage of missing values is `r pct_miss(final_data)`%.
+
+
+#### 9. Construct an appropriate plot to show the co-occurrence of missing values across variables. [1m]
+
+```{r}
+gg_miss_upset(final_data) 
+```
+
+#### 10. Based on your plot in question 8, answer the following:
+
+#### 10a. How many observations are missing only for `Medal`? Does it raise a concern? [Do not need inline coding.] [2m]
+
+There are 175591 observations missing only for 'Medal'. These are high numbers for missing observations and so it does raise a concern of having these many missing observations, that too only for the Medal column. It will increase the percentage of missing values for the entire table, but the possible reason is it maybe due to no medal earned for the particular candidate and then lead to reduced in statistical power and representative of the samples. 
+
+
+#### 10b. What is the percentage of missing values for `Height` and `Weight` only regardless of whether they have won a medal? [Do not need inline coding, but if you wish you can have it here.] [2m+1m]
+
+```{r}
+# coding here
+pct_miss_HW <- final_data %>%
+  select(Height,Weight) %>%
+  miss_case_table()
+
+```
+
+The total percentage of missing for `Height` and `Weight` regardless of they have won the medal is `r pct_miss_HW[3,3]`%.
+
+
+#### 11. Are the Olympics games authorities paying more attention towards data collection over the years? (Focus on only the Summer games). Do you observe an increase in data completeness? [hint: Visualize the data completeness for different variables over the years.] What do you learn from this graph? Which variables contain the most missing values? Why there is a gap in the plot? Reproduce the plot below and answer the question. [8m]
+
+```{r}
+# many lines of coding here!
+final_data %>%
+  filter(Season == "Summer") %>%
+  select(!c("ID","Medal")) %>%
+  gg_miss_fct(fct = Year) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_continuous(breaks=seq(1896, 2016, 4))
+
+``` 
+
+Indeed. The Olympics games authorities are paying more attention towards the collection of data over the years.
+From the graph, it is proven that the data is complete as the variables like height, weight and the age are getting better over the time duration.
+The 'Medal' column has the most number of missing values.
+There's a gap between the years 1912- 1920 and 1936-1944 approximately. This might be because of the World war-1 and world war-2.
+
+
+```{r, out.width="80%", eval = TRUE, echo=FALSE}
+knitr::include_graphics("images/plot1.jpg")
+```
+
+
+#### 12. How would you deal with the missing values? Is the missing is at random? [2m]
+
+No, the missing is not at random. What year the "height" is missing, then that year the "Weight" seems to be missing as well.
+
+Some way to treat missing value:
+1. Deleting the observations
+2. Deleting the variable
+3. Imputation with mean / median / mode
+4. Prediction of missing values.
+
+For example,for "Weight", we can estimate a model, then using the model to predict some values to fill in to replace NAs.
+
+
+
+### Section C: Data Exploration
+
+#### 13. Count the number of times a country has hosted Olympics games using the `host_c` data and construct a relevant plot (in descending order of the number of times countries hosted the Olympics). [4m]
+
+```{r}
+host_c %>% 
+  count(Country)%>% 
+    ggplot(aes(x = reorder(Country, -n),
+               y = n)) + 
+    geom_col() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(y = "Number of hosting",
+         x = "",
+         title = "Countries that hosted Olympics from 1956-2016") 
+```
+
+
+#### 14. How many athletes took part each year in each Season? The table should have 3 columns which are `Year`, `Summer` and `Winter`. Sort the data with the highest value for Summer. [5m]
+
+```{r}
+final_data %>% 
+    count(Year, Season) %>%
+    pivot_wider(id_cols = Year,
+                names_from = Season,
+                values_from = n) %>% 
+    arrange(desc(Summer))
+```
+
+
+#### 15. Plot an appropriate graph to show the trend of the number of athletes involved in both seasons. Rename the y-axis. [3m]
+
+```{r}
+final_data %>% 
+    count(Year, Season) %>% # no mark, same as question 2
+    ggplot(aes(x = Year,
+               y = n, 
+               colour = Season)) +
+    geom_line() +
+    labs(y = "Number of Athletes") -> q12
+
+q12
+```
+
+#### 16. Find out why there is a peak and trough in the number of athletes by constructing an interactive plot. Which games show dips in the trend? List 3 of them (in years). (no inline code is required.) [1m+2m]
+
+```{r}
+ggplotly(q12)
+```
+
+I observed that when focus on Summer games, there are three dips in 1932 with 2969 athletes, 1956 with 5127 athletes and 1980 with 7191 athletes.
+
+#### 17. Add `geom_text` to show the name of the host city of 3 games that you mentioned in the previous question in the graph (focus only on the Summer games). Find out why there are two Cities for holding the Olympic games. Write a small paragraph about it. [4m + 2m]
+
+```{r}
+dip <- final_data %>% 
+          filter(Year %in% c(1932,1956,1980) & Season == "Summer")  %>% #3m
+          count(Year, Season, City)
+          
+q12 +
+    geom_text(aes(label = City), colour = "blue", data = dip) # Ask among your group member why the colour argument is not placed inside the aesthetics?
+```
+
+From the graph shown, in 1956 there are two hosting cities Melbourne and Stockholm. This was the first time the Olympics would be held in the Southern Hemisphere and Oceania, and it also marked the first occasion that the Games were played outside of Europe and North America. However, in the lead up to the Games, there were a series of boycotts, political problems, and controversy. Australian equine quarantine laws prevented the equestrian events from taking place in Melbourne. Therefore, the equestrian events at the 1956 Summer Olympics were held in Stockholm and included dressage, eventing, and show jumping.
+
+#### 18. Did the number of events in the Olympic games change over time? Construct a relevant plot showing a trend each for the Summer and Winter games. [2m]
+
+```{r}
+data %>% 
+    group_by(Year, Season) %>%
+    summarise(n_event = length(unique(Event))) %>% 
+    ggplot(aes(x = Year, 
+               y = n_event,
+               colour = Season)) +
+    geom_point() +
+    geom_line() + # show the trend
+    labs(y = "Number of events",
+         title = "Increasing number of events in the Olympics games") +
+    theme_minimal()
+  
+  
+  
+```
+
+From here onwards, we will focus on just the Summer games.
+
+```{r}
+final_data2 <- final_data %>% 
+    filter(Season == "Summer")
+```
+
+
+#### 19. Do countries win more medals if they are the hosts? According to research (Clarke, 2000), the host countries will win more medals due to several factors such as home-field advantage, crowd support, and higher participation rate. Let's just focus on Australia and see if the data are consistent with the research by Clarke. 
+
+#### 19a.  Count the number of medals that Australia has won since 1896. [4m]
+
+```{r}
+medals_won <- final_data2 %>% 
+    filter(region == "Australia") %>% 
+    select(Games, Year, Medal, Sport, Event, Country, City) %>% 
+    distinct() %>% 
+    group_by(Games, Year, City, Country) %>% 
+    summarise(total_medals = sum(n_complete(Medal), na.rm = TRUE)) 
+
+medals_won
+
+```
+
+#### 19b. In which year(s) did Australia host the Olympic games? [Inline coding is needed.] [2m+2m]
+
+```{r}
+yearhost <- medals_won %>%  
+    filter(Country == "Australia")
+
+yearhost
+```
+
+In year `r yearhost[1,2]` and `r yearhost[2,2]`Australia host the Olympic game.
+
+#### 19c. Combine 17(a) and 17(b) and construct a line plot to show the number of medals won by Australia. Circle and show the name of the host city of the two data points which correspond to the years when Australia hosted the games. [4m]
+
+```{r}
+medals_won %>% 
+    ggplot(aes(x = Year,
+               y = total_medals)) + 
+    geom_line(aes()) +
+    geom_point(shape = 1, size = 3, colour = "red",  data = yearhost) +
+    geom_label_repel(aes(label = City), color = "blue", data = yearhost) +
+    labs(y = "Total Medals",
+         title = "Number of medals won by Australia at Olympic games")
+```
+
+#### 20. Is there an equal participation rate (in number) between male and female athletes over time? Count the numbers and plot the data. What do you observe? [4m +1m]
+
+```{r}
+n_sex <- final_data2 %>% 
+    group_by(Year, Sex) %>% 
+    summarize(n_ath = sum(n())) # you might want to fill up multiple function here #3m
+n_sex
+```
+
+```{r}
+ggplot(n_sex, aes(x = Year, y =n_ath,
+                  group = Sex, colour = Sex)) +
+    geom_col(position = "fill")
+```
+
+I observed that participation rate between male and female are not equal, male participants are always more than female over the time from 1890 till now. But looking at the graph, female participants isincreased while male participants is decreased over the time , so it is unsure to say the male participants will still stay more than female in later years.
+
+
+#### 21. Who are the Top 20 (based on the total number of medals won) athletes in the History of the Olympic Games? [4m]
+
+```{r}
+final_data2 %>% 
+  group_by(Name, Team) %>% 
+  summarize(n_medal = n_complete(Medal)) %>% # multiple functions are allowed here #2m
+  arrange(desc(n_medal)) %>% 
+  top_n(20)
+```
+
+There are a lot more analysis that you can do, but I will stop here. Please explore the data on your own time 😇.
+
+### Section D: Modelling
+
+Let's predict the number of medals won!
+
+According to research, country GDP, population, home field advantage are the most common factors in predicting the medal won by the country.
+
+#### 22. Import the GDP and the Population data from the data folder. [3m]
+
+```{r}
+world_pop <- read_excel("data/world_pop.xlsx")
+world_gdp <- read_excel("data/world_gdp.xlsx", range = cell_limits(c(4,1),c(NA,NA)))
+
+head(world_pop)
+head(world_gdp)
+```
+
+#### 23. Unfortunately, the years of the data are in columns. So let's change them to be displayed in rows. The new column should be named `Year`, the column for population should be named `pop` and the column for gdp should be named `gdp`. [6m]
+
+```{r}
+world_pop1 <- world_pop %>% 
+               pivot_longer(cols = -c("Country","Country Code", "Indicator Name", "Indicator Code"),
+                   names_to = "Year",
+                   values_to = "pop") %>% 
+               clean_names() %>% 
+               mutate(year = as.numeric(year))
+  
+head(world_pop1)  
+  
+world_gdp1 <- world_gdp %>% 
+               pivot_longer(cols = -c("Country Name","Country Code", "Indicator Name", "Indicator Code"),
+                   names_to = "Year",
+                   values_to = "gdp") %>% 
+               clean_names() %>% 
+               mutate(year = as.numeric(year))
+
+head(world_gdp1) 
+```
+
+#### 24. Now, let's consider only the data from 1992 (inclusive). Create a column `homefield`, indicating 1 if the `Team` is the same as the hosted `Country` variable, else 0. Calculate the total medals won by each `Team`. [6m]
+
+```{r}
+final_data2 %>% 
+    filter(Year %in% c(1992:2016)) %>% 
+    mutate(homefield = ifelse(Team == Country, 1, 0)) %>% 
+    select(Games, Year, Medal, Sport, Event, Country, City, Team, homefield) %>% 
+    distinct() %>% 
+    group_by(Year, Country, Team, homefield) %>% 
+    summarise(total_medals = sum(n_complete(Medal), na.rm = TRUE)) -> final
+
+head(final)
+```
+
+#### 25. We have all our data ready. Combine the data so that `gdp` and `pop` data are included in one data set. [4m]
+
+```{r}
+final %>% 
+  left_join(world_gdp1 %>% select(year, country_name, gdp),
+            by = c("Team" = "country_name", "Year" = "year")) %>% 
+  left_join(world_pop1 %>% select(year, country, pop),
+            by = c("Team" = "country", "Year" = "year")) %>% 
+  mutate(gdp_m = gdp/1000000000,
+         pop_m = pop/1000000000) -> model_data
+```
+
+#### 26. It is important to examine whether the model fulfil the assumption of normality in the dependent variable. Draw a histogram of the y variable. Discuss the outcome. [1m]
+
+```{r}
+ggplot(model_data,
+       aes(x = total_medals)) +
+       geom_histogram() 
+```
+
+The y variable appears to have a lot of zero values and it is a right-skewed data.
+
+#### 27. Now regress the y variable with `gdp_m`, `pop_m` and `homefield` data. Interpret the coefficients of the model. [4m+ 3m]
+
+```{r}
+linear_model <- lm(total_medals ~ gdp_m + pop_m + homefield , data = model_data) # the first argument contains a long coding. # 3m
+
+tidy(linear_model)
+```
+
+The Y-variable and the other dependent variables are corresponding to each other accordingly. In positive coefficient,
+Country is expected to earn more total medals, on average, by 0.0090, for each additional $1000000000 GDP.
+Country is expected to earn more total medals, on average, by 6.6929, for each additional 1000000000 population.
+Country is expected to earn more total medals, on average, by 22.9147, if it is at athletes homefield.
+
+#### 28. Obtain and discuss the goodness of fit of the model. [1m + 2m]
+
+```{r}
+glance(linear_model)
+```
+
+Roughly 44.03% of the variability in total_medals can be explained by gdp_m, pop_m and homefield. So the goodness of fit of the model is considered to be relative weak, since the explained sample in the model only below 50%.
+
+#### 29. Examine the residual to see whether there is any left over pattern for further investigation about model accuracy. Explain. [4m + 1m]
+
+```{r}
+# combine all data
+model_data_complete <- augment(linear_model) 
+```
+
+```{r}
+ggplot(data = model_data_complete,
+       aes(x = .fitted,
+           y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, colour = "red")
+   
+# oR
+
+resid_panel(linear_model, plot = "all")
+```
+
+I observed that the model doesn't really have residuals around the red line as a perfect fit model would have a horizontal line at zero. Also the residuals are kind of right skewed distributed.
+
+
+
+#### 30. Predict the total medals won by Australia using the above model and compare the predicted value to the actual data. The information for Australia's Gross Domestic Product in US dollar and total population size are as below. [3m = Calculation + comparison + explanation]
+
+Australia GDP:  1,359,330,000,000   
+Australia population as of 2020: 25,694,393
+
+Calculation:
+total_medals = 2.147314278 + 0.008981092gdp_m + 6.692875882pop_m + 22.914676098homefield
+
+total_medals^hat    = 2.147314278 + 0.008981092* 1359330000000/1000000000 + 6.692875882* 25694393/1000000000 + 22.914676098* 0
+                    = 14.52755
+
+Comparison: 
+In Olympic Games Tokyo 2020, Australia won 46 medals in total. 
+
+Compare with the predicted value from created regression model, the predicted value is differ with the actual data.
+Actual data is 46 medals but predicted value is around 15 medals.
+
+
+Explanation: 
+The predicted value is smaller than the predicted value by more than half, which indicates this regression model is not an appropriate model to predict medal earns in Olympics. The reason for the large difference between the predicted value and the actual data may be the lack of variables is added in, there should be others dependent variables which will affect the number of medal earns. 
+
+### References
+
+The original Olympics Games data was obtained from https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results
+
+The population and GDP data was obtained from https://www.gapminder.org/data/
+

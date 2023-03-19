@@ -1,0 +1,328 @@
+---
+title: "Assignment 1 ETC1010 - 5510"
+author: "Aparna Suresh"
+date: "`r format(Sys.Date(), '%A, %B %e %Y')`"
+output:
+  html_document: 
+    toc: yes
+subtitle: New South Wales Crime Incidents Report
+---
+
+```{r setup, include = FALSE}
+install.packages("knitr")
+knitr::opts_chunk$set(
+	eval = FALSE,
+	echo = TRUE,
+	cache = FALSE,
+	cache.lazy = FALSE
+)
+```
+
+<style>
+p.comment {
+background-color: #DBDBDB;
+padding: 10px;
+border: 1px solid black;
+margin-left: 25px;
+border-radius: 5px;
+font-style: italic;
+} </style>
+
+# ℹ️️ Informations
+
+<p class="comment">
+This is a real world dataset taken from the New South Wales Bureau of Crime Statistics and Research. You have just joined a consulting company as a data scientist. To give you some experience and guidance, you are performing a quick summary of the data while answering a number of questions that the chief business analytics leader has. This is not a formal report, but rather something you are giving to your manager that describes the data with some interesting insights. 
+</p>
+
+
+## 🏣 Marking + Grades + Due date
+
+- This **individual** assignment will be worth **10%** of your total grade, and is marked out of a total of 59 marks for undergraduate and a total of 69 marks for postgraduate.
+
+- This assignment is due at **8pm (Melbourne Time) on Monday,  16 August 2021**.
+ 
+- For this assignment, you will need to upload the rendered **HTML** file into Moodle. Please make sure you add your name on the YAML part of this Rmd file. The HTML file will be used as your final answers to the assignment. (Remember that you need to submit 2 files: html and Rmd, please do not zip your files. NO ZIP!!!)
+
+- Keep all your work in the Rstudio cloud. We will check your project online via Rstudio cloud.
+      
+
+## 🆘 How to find help from R functions?
+
+Remember, you can look up the help file for functions by typing: `?function_name`. For example, `?mean`. Feel free to google questions you have about how to do other kinds of plots, and post on the "Assignment Discussion Forum" any questions you have about the assignment.
+
+## 🔩 Instructions
+
+The data can be found here at https://www.bocsar.nsw.gov.au/Documents/Datasets/SuburbData.zip. (Specifically, the data file called "SuburbData2019.csv" is located in your data folder inside the RStudio project for assignment 1.)
+
+To complete the assignment, you will need to fill in the blanks with the appropriate function names, arguments, or other names. These sections are marked with  `___`. **At a minimum, your assignment should be able to be "knitted"** using the `Knit` button for your Rmarkdown document. There are some codes here that I never mentioned in class but I want to let you see how I used it here. Please play around with it.
+
+If you want to look at what the assignment looks like in progress with some of the R codes remaining invalid in the R code chunks, remember that you can set the R chunk options to `eval = FALSE` like so:
+
+````markdown
+```{r this-chunk-will-not-run, eval = FALSE} `r ''`
+ggplot()
+```
+````
+
+**If you use `eval = FALSE` or `cache = TRUE`, please remember to ensure that you have set  to `eval = TRUE` when you submit the assignment, to ensure all your R codes run.**
+
+
+# 🗄️Report
+
+## Part A: All students need to answer this section.
+
+Load the data wrangling package here.
+
+```{r libraries, eval = TRUE, message = FALSE, warning = FALSE}
+install.packages("tidyverse")
+install.packages("dplyr")
+install.packages("lubridate")
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+
+```
+
+#### Question 1: Reading and preparing data. The data file called "SuburbData2019.csv" is located in your data folder inside this assignment R project. [1m]
+
+```{r read-in-data, message = FALSE, eval=TRUE}
+crime <- read_csv("data/SuburbData2019.csv")
+```
+
+#### Question 2: How many observations and variables are available in this data set? You are not allowed to type the answer manually. [2m]
+
+**Hints**: Use inline R codes to complete the blank below. Look for help *?dim* in your R console and remember
+that variables are in columns and observations in rows.
+*dim()* returns the number of rows and the number of columns in the data set (in that order). You can also use other functions that count the number of rows and the number of columns.
+
+
+The data contains `r nrow(crime) ` observations and `r ncol(crime) ` variables.
+
+#### Question 3: Take a closer look at the dataset to understand it better. Do not evaluate this code chunk. This answer is too long for you to print. You can run it in your own console. [1m]
+
+```{r investigate-data, eval=TRUE}
+head(crime)
+
+
+```
+
+Most of the columns are the time column which consists of the information about month and date!
+
+#### Question 4: How many suburbs in the dataset? [1m]
+
+**Hint:** Try to look up a function in R that helps you to find the unique values of a variable.
+
+```{r}
+#length(unique(crime[c("Suburb")]))
+ans <- table(unique(crime[c("Suburb")]))
+length(ans)
+
+```
+
+
+There are 4465 suburbs.
+
+
+<p class="comment">
+Let's just study the last 20 years of data from now on for all the part A questions.
+</p>
+
+#### Question 5: Extract the last 20 years of data which is from January 1999 to December 2019 for the 10 most dangerous areas in NSW. I have listed all suburbs for you here. [3m]
+
+```{r create-data, eval=TRUE}
+crime_subset <-crime %>%
+  select(-c("Jan 1995":"Dec 1998")) %>%
+  dplyr::filter(Suburb %in% c("Blacktown",
+                              "Alison (Central Coast)",
+                              "Bankstown",
+                              "Liverpool",
+                              "Doonside",
+                              "Claymore",
+                              "Fairfield",
+                              "Merrylands",
+                              "Shalvey",
+                              "Tregear"))
+```
+
+
+#### Question 6: Display the first 10 rows of the newly filtered data. (Always make a good habit to take a quick look at your data.) [2m]
+
+**Hint:** Check *?head* in your R console
+
+```{r read-top, eval = TRUE}
+head(crime_subset, 10)  
+```
+
+#### Question 7: Build a table to show the frequency of each offence category. Arrange the frequency in descending order. Which two categories have the most offences issued. [4m + 2m]
+
+```{r freq-offence, eval=TRUE}
+q7 <- crime_subset %>% 
+        count(`Offence category`)
+q7
+q7 <- q7 %>% arrange(-(n))
+q7
+        
+        
+        
+
+q7
+```
+
+The highest two frequency of offences are Drug offences and Theft.
+
+#### Question 8: Draw a suitable plot to show the same information as in Question 7 but just restricted it to the highest 5 categories. Look at the last line of coding, what this coding is trying to do? It is just to make the label more visible by rotating the label. [3m]
+
+```{r plot-offence, eval=TRUE}
+q7 %>% 
+  top_n(5) %>% 
+  ggplot(aes(x = `Offence category`,
+             y = n)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle=45, hjust = 1))
+```
+
+
+#### Question 9: Change the `crime_subset` object into a format so that all the years are stacked together to form a column, name this variable "date" and the corresponding incidents count into a variable called "cases". [5m]
+
+```{r long-data, eval=TRUE}
+crime_long <- crime_subset  %>%
+pivot_longer(cols = c(`Jan 1999`:`Dec 2019`),
+                names_to = "date",   
+                values_to = "cases") 
+
+head(crime_long, n=10)    
+```
+
+#### Question 10: Change the `Offence category` variable to `offence_category` for easy coding. [3m]
+
+```{r rename-var, eval=TRUE}
+crime_long_new <- crime_long %>% 
+          rename(offence_category=`Offence category`)
+```
+
+#### Question 11: Split the `date` column into 2 new columns: `year` and `month`. Take a look at the data type in the newly created columns. What do you see? Character variable! Change it to a numeric variable. [5m]
+
+```{r split-cols, eval=TRUE}
+q11 <- crime_long_new %>% 
+        separate(col = date,
+                 into = c("month", "year")) %>% 
+        mutate(month = match(month, month.abb),
+               year = as.numeric(year))
+
+q11
+```
+
+#### Question 12: Calculate the total offences for each `offence_category` in each year. Show the mean and standard deviation as well. Lastly, sort it in by descending order based on total offences. [7m]
+
+```{r summarise-data, eval=TRUE}
+q12 <- q11 %>% 
+          select(offence_category, year, cases) %>% 
+          group_by(offence_category, year) %>% 
+          summarise(yearly_inc = sum(cases),
+                    average = mean(cases),
+                    stdev = sd(cases)) %>% 
+          arrange(-(yearly_inc))
+  
+q12
+```
+
+#### Question 13: It will be interesting to look at the trend of each offences over time! That is the purpose why we transformed our data above. Without transforming it into a long format there is no easy way to draw the graph. Let's try, draw a graph to show the trending of offence category over the years. But first, let's limit the offence category to just the common five as in question 8. What do you observe from here? [6m + 2m]
+
+```{r trend-plot, eval=TRUE}
+q13 <- q12 %>% 
+          dplyr::filter(offence_category %in% c("Against justice procedures", "Disorderly conduct","Drug offence", "Homicide", "Theft")) %>% # 2m
+          ggplot(aes(x = year,
+                     y = yearly_inc,
+                     colour = offence_category)) +
+          geom_line() +
+          theme(legend.position = "bottom") +
+          guides(colour = guide_legend(nrow = 2, byrow = TRUE))
+
+q13
+```
+I observed that each offence has been plotted using a different color within the same graph.
+
+#### Question 14: You will notice that some categories in Question 13 hardly can be seen as the values are way smaller than the other groups. There is a way to solve this, which is to change it to multiple plots with each offences showing its trending pattern. Now, reinterpret your result about the trending. [1m] + [2m]
+
+```{r facet-plot, eval=TRUE}
+q13 + 
+  facet_wrap(~offence_category, scales = "free_y") +
+  theme(axis.text.x = element_text(angle=45, size = 5))
+```
+I observed that the Against justice procedures have increased over time, Disorderly conduct has increased and decreased over time, Homicide and theft has decreased from 1995 - 2019. 
+
+
+#### Question 15:  How many subcategory offences are under the offence category of *Homicide*? [4m]
+
+```{r crime-offence, eval=TRUE}
+q15 <- crime_long_new %>% 
+          dplyr::filter(offence_category == "Homicide") %>%  
+          group_by(Subcategory) %>%                          
+          summarise(Cases = sum(cases)) 
+
+q15
+```
+
+#### Question 16: Draw a plot to show the result in question 15 but remember to change the coordinate to show the number of incidents in the x axis and change the theme to black and white. [2m]
+
+```{r coord, eval=TRUE}
+q15 %>%
+  ggplot(aes(x = fct_reorder(Subcategory, Cases),
+             y = Cases)) +
+  geom_col() +
+  coord_flip() +
+  theme_bw()
+```
+
+#### Question 17: Fill up the bar in question 16 so that each bar show different color. Change the y axis label to `Subcategory` and add a title of `Number of cases for Homicide in the past 10 years`. [3m]
+
+```{r fill, eval=TRUE}
+q15 %>%
+  ggplot(aes(x = fct_reorder(Subcategory, Cases),
+             y = Cases,
+             fill = fct_reorder(Subcategory, Cases))) +
+  geom_col() +
+  coord_flip() + # no mark for this, same as q16
+  theme_bw() + # no mark for this, same as q16
+  theme(legend.position = "bottom") +
+  guides(fill = FALSE) + # turn off the legend 
+  labs(x = "Subcategory") +
+  ggtitle("Number of cases for Homicide in the past 10 years")
+```
+
+
+## Part B: **Postgraduate student only** (You are only required to answer this part if you enrolled in ETC5510) 
+
+<p class="comment">
+*"Offensive language is the offence of using language in a way which could cause offence to a reasonable person in, near, or within hearing or view of a public place or school. This offence is a “contextual” offence and must be considered by the Court on a case-by-case basis depending on the circumstances."* Is the offence of offensive language improves with time when people are more educated? Use the original data to answer the question. Reproduce the graph below. Please show your coding neatly. You do not have to follow the tick mark on the x-axis or y-axis exactly, as long as the labels and the values are correct for `Time` and `Count`, you should be good.
+</p>
+
+**Hint**: Use the `crime` data to get you started. You might need to change the data type of the x variable using `lubridate` package.  [10m]
+
+```{r part-b, eval=TRUE}
+partb <- crime %>% 
+          dplyr::filter(Subcategory == "Offensive language") 
+partc <- partb[-c(1:3)]
+partc <- pivot_longer(partc, col = c(`Jan 1995`:`Dec 2019`),
+                names_to = "Time",   
+                values_to = "cases")
+
+partc$Time <- my(partc$Time)
+partc <- partc %>%
+              mutate(month = format(partc$Time, "%m"), year = format(partc$Time, "%Y")) %>%
+              group_by(Time) %>%
+              summarise(total = sum(cases))
+ggplot(partc, aes(x = partc$Time, y = total)) +
+  geom_line()+
+   labs(x = "Time", y = "Count") +
+  ggtitle("Monthly offensive language charges dropped over time. Education helps?")
+#partc %>% mutate(Month_Year = as.Dat(format(partc$Time, format = "%Y-%m")))
+
+
+```
+
+```{r pic, echo=FALSE, eval=TRUE}
+knitr::include_graphics("images/partb.png")
+```
+
