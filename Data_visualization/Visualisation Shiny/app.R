@@ -32,6 +32,7 @@ library(repr)
 
 #/Users/aparnasuresh/Desktop/data_vis/Visualisation/www/
 data <- read_csv("data.csv")
+options(warn=-1)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
