@@ -33,24 +33,31 @@ The user can select what relationship they want to see within what specific time
 
 ## Relationship between the key factors of a video
 
+<img width="1436" alt="general_3" src="https://github.com/sureshaparna/Monash-University/assets/39727231/767764fa-0770-40ee-bea3-1d5866b51176">
 The user can choose a specific timeline and a specific relationship. This is achieved using a Dygraph for the timeline selection.
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/selection_1.png)
+<img width="1431" alt="selection_1" src="https://github.com/sureshaparna/Monash-University/assets/39727231/0d9271a4-f593-4b8b-9c92-91b801063b39">
+
+
+
 
 The above image shows the relationship between Views and Likes for a timeline. On hovering over the graph, it shows the corresponding data for that specific timeline. 
 
 
 ## Analysis for the data in the USA
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/usa.png)
+<img width="1440" alt="usa" src="https://github.com/sureshaparna/Monash-University/assets/39727231/9fe718e3-8d7b-4257-9c86-b8c0cd240e93">
+
 
 
 ## Analysis for the data in Canada
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/canada.png)
+<img width="1439" alt="canada" src="https://github.com/sureshaparna/Monash-University/assets/39727231/bfcdd8ac-a4bd-42ac-8960-dface0cb9f8c">
+
 
 ## Analysis for the data in the Great Britain
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/gb.png)
+![Uploading gb.png…]()
+
 
 Thus, we can see the analysis of the YouTube data from three different countries using the application created using R Shiny.
