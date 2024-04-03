@@ -3,7 +3,8 @@ This Application using R Shiny takes you through the analysis of the Youtube Dat
 
 ### Home Page
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/homepage.png)
+<img width="1440" alt="homepage" src="https://github.com/sureshaparna/Monash-University/assets/39727231/1f1a4fe9-e427-47cc-94df-54fc46889a43">
+
 
 This page helps you navigate your way to analayse and see the visualisations. There are 6 options where you can see the visualisations depending on the option you choose. 
 
