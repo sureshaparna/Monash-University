@@ -12,7 +12,8 @@ This page helps you navigate your way to analayse and see the visualisations. Th
 
 This page tells you how you can navigate through each page of the application. 
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/orchestration.png)
+<img width="1439" alt="orchestration" src="https://github.com/sureshaparna/Monash-University/assets/39727231/fad584a2-47a9-4db5-86ad-d22055d18780">
+
 
 ## Overall Analysis 
 
@@ -23,13 +24,12 @@ This page shows the overall analysis of all the 3 countries. Here you can see fa
   
 The user can select what relationship they want to see within what specific timeline. 
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/general_1.png)
+<img width="1404" alt="general_1" src="https://github.com/sureshaparna/Monash-University/assets/39727231/c5a03c8f-afb0-4021-b05b-ce1835da13ae">
 
 
 ## Analysis of Trending videos
 
-![image](/Users/aparnasuresh/Desktop/Monash/data_vis/Visualisation/README/general_2.png)
-
+<img width="1433" alt="general_2" src="https://github.com/sureshaparna/Monash-University/assets/39727231/baebd537-e614-4dfe-bc80-a40f9cdb5f47">
 
 ## Relationship between the key factors of a video
 
