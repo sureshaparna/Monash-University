@@ -57,7 +57,8 @@ The above image shows the relationship between Views and Likes for a timeline. O
 
 ## Analysis for the data in the Great Britain
 
-![Uploading gb.png…]()
+
+<img width="1440" alt="gb" src="https://github.com/sureshaparna/Monash-University/assets/39727231/f61f1e06-e654-4313-aa25-56186ad519db">
 
 
 Thus, we can see the analysis of the YouTube data from three different countries using the application created using R Shiny.
